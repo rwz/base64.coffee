@@ -1,0 +1,3 @@
+[submodule "unicode"]
+	path = unicode
+	url = git://github.com/rwz/unicode.coffee.git
