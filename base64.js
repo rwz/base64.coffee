@@ -3,7 +3,7 @@
     var INVALID_CHARACTER_ERR, characters, decode, encode, fromCharCode, invalidCharacters, max;
     characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
     fromCharCode = String.fromCharCode;
-    invalidCharacters = /[^A-Za-z0-9\+\/\=]/g;
+    invalidCharacters = /[^\w\+\/\=]/g;
     max = Math.max;
     INVALID_CHARACTER_ERR = (function() {
       try {

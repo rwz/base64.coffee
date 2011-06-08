@@ -1,7 +1,7 @@
 @Base64 = (->
   characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
   fromCharCode = String.fromCharCode
-  invalidCharacters = /[^A-Za-z0-9\+\/\=]/g
+  invalidCharacters = /[^\w\+\/\=]/g
   max = Math.max
   INVALID_CHARACTER_ERR = (->
     try
