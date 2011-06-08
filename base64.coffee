@@ -1,5 +1,15 @@
 @Base64 = (->
-  str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
+  characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
+  fromCharCode = String.fromCharCode
+  invalidCharacters = /[^A-Za-z0-9\+\/\=]/g
+  max = Math.max
+  INVALID_CHARACTER_ERR = (->
+    try
+      document.createElement '$'
+    catch error
+      error
+  )()
+
 
   encode = @btoa || (input) ->
     output = ''
@@ -7,9 +17,12 @@
 
     while i < input.length
 
-      chr1 = input.charCodeAt(i++)
-      chr2 = input.charCodeAt(i++)
-      chr3 = input.charCodeAt(i++)
+      chr1 = input.charCodeAt(i++) || 0
+      chr2 = input.charCodeAt(i++) || 0
+      chr3 = input.charCodeAt(i++) || 0
+
+      if max(chr1, chr2, chr3) > 0xFF
+        throw INVALID_CHARACTER_ERR
 
       enc1 = chr1 >> 2
       enc2 = ((chr1 & 3) << 4) | (chr2 >> 4)
@@ -22,36 +35,41 @@
         enc4 = 64
 
       for char in [ enc1, enc2, enc3, enc4 ]
-        output += str.charAt(char)
+        output += characters.charAt(char)
 
     output
 
   decode = @atob || (input) ->
     output = ''
     i = 0
+    length = input.length
 
-    input = input.replace /[^A-Za-z0-9\+\/\=]/g, ''
+    if length % 4 != 0
+      throw INVALID_CHARACTER_ERR
 
-    while i < input.length
+    while i < length
 
-      enc1 = str.indexOf input.charAt(i++)
-      enc2 = str.indexOf input.charAt(i++)
-      enc3 = str.indexOf input.charAt(i++)
-      enc4 = str.indexOf input.charAt(i++)
+      enc1 = characters.indexOf input.charAt(i++)
+      enc2 = characters.indexOf input.charAt(i++)
+      enc3 = characters.indexOf input.charAt(i++)
+      enc4 = characters.indexOf input.charAt(i++)
 
       chr1 = (enc1 << 2) | (enc2 >> 4)
       chr2 = ((enc2 & 15) << 4) | (enc3 >> 2)
       chr3 = ((enc3 & 3) << 6) | enc4
 
-      output += String.fromCharCode(chr1)
+      output += fromCharCode(chr1)
 
       if enc3 != 64
-        output += String.fromCharCode(chr2)
+        output += fromCharCode(chr2)
       if enc4 != 64
-        output += String.fromCharCode(chr3)
+        output += fromCharCode(chr3)
     output
 
-  decode: (input) -> Unicode.pack decode(input)
+  decode: (input) ->
+    result = decode(input.replace(invalidCharacters, ''))
+    Unicode.pack(result)
+
   encode: (input) -> encode(Unicode.unpack input)
 
 )()
