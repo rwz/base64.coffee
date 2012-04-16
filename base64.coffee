@@ -1,75 +1,78 @@
-@Base64 = (->
-  characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
-  fromCharCode = String.fromCharCode
-  invalidCharacters = /[^\w\+\/\=]/g
-  max = Math.max
-  INVALID_CHARACTER_ERR = (->
-    try
-      document.createElement '$'
-    catch error
-      error
-  )()
+CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
+INVALID_CHARACTERS = /[^a-z\d\+\=\/]/ig
+fromCharCode = String.fromCharCode
+
+class InvalidSequenceError extends Error
+  name: 'InvalidSequence'
+  constructor: (char) ->
+    if char
+      @message = "#{char} is an invalid BASE64 character"
+    else
+      @message = "Invalid bytes sequence"
 
 
-  encode = @btoa || (input) ->
-    output = ''
-    i = 0
 
-    while i < input.length
+encode64 = this.btoa || (input) ->
+  output = ''
+  i = 0
 
-      chr1 = input.charCodeAt(i++) || 0
-      chr2 = input.charCodeAt(i++) || 0
-      chr3 = input.charCodeAt(i++) || 0
+  while i < input.length
 
-      if max(chr1, chr2, chr3) > 0xFF
-        throw INVALID_CHARACTER_ERR
+    chr1 = input.charCodeAt(i++) || 0
+    chr2 = input.charCodeAt(i++) || 0
+    chr3 = input.charCodeAt(i++) || 0
 
-      enc1 = chr1 >> 2
-      enc2 = ((chr1 & 3) << 4) | (chr2 >> 4)
-      enc3 = ((chr2 & 15) << 2) | (chr3 >> 6)
-      enc4 = chr3 & 63
+    if invalidChar = Math.max(chr1, chr2, chr3) > 0xFF
+      throw new InvalidSequenceError(invalidChar)
 
-      if isNaN chr2
-        enc3 = enc4 = 64
-      else if isNaN chr3
-        enc4 = 64
+    enc1 = chr1 >> 2
+    enc2 = ((chr1 & 3) << 4) | (chr2 >> 4)
+    enc3 = ((chr2 & 15) << 2) | (chr3 >> 6)
+    enc4 = chr3 & 63
 
-      for char in [ enc1, enc2, enc3, enc4 ]
-        output += characters.charAt(char)
+    if isNaN chr2
+      enc3 = enc4 = 64
+    else if isNaN chr3
+      enc4 = 64
 
-    output
+    for char in [ enc1, enc2, enc3, enc4 ]
+      output += CHARACTERS.charAt(char)
 
-  decode = @atob || (input) ->
-    output = ''
-    i = 0
-    length = input.length
+  output
 
-    if length % 4 != 0
-      throw INVALID_CHARACTER_ERR
+decode64 = this.atob || (input) ->
+  output = ''
+  i = 0
+  length = input.length
 
-    while i < length
+  unless length % 4
+    throw new InvalidSequenceError
 
-      enc1 = characters.indexOf input.charAt(i++)
-      enc2 = characters.indexOf input.charAt(i++)
-      enc3 = characters.indexOf input.charAt(i++)
-      enc4 = characters.indexOf input.charAt(i++)
+  while i < length
 
-      chr1 = (enc1 << 2) | (enc2 >> 4)
-      chr2 = ((enc2 & 15) << 4) | (enc3 >> 2)
-      chr3 = ((enc3 & 3) << 6) | enc4
+    enc1 = CHARACTERS.indexOf input.charAt(i++)
+    enc2 = CHARACTERS.indexOf input.charAt(i++)
+    enc3 = CHARACTERS.indexOf input.charAt(i++)
+    enc4 = CHARACTERS.indexOf input.charAt(i++)
 
-      output += fromCharCode(chr1)
+    chr1 = (enc1 << 2) | (enc2 >> 4)
+    chr2 = ((enc2 & 15) << 4) | (enc3 >> 2)
+    chr3 = ((enc3 & 3) << 6) | enc4
 
-      if enc3 != 64
-        output += fromCharCode(chr2)
-      if enc4 != 64
-        output += fromCharCode(chr3)
-    output
+    output += fromCharCode(chr1)
 
-  decode: (input) ->
-    result = decode(input.replace(invalidCharacters, ''))
-    Unicode.pack(result)
+    if enc3 != 64
+      output += fromCharCode(chr2)
 
-  encode: (input) -> encode(Unicode.unpack input)
+    if enc4 != 64
+      output += fromCharCode(chr3)
 
-)()
+  output
+
+this.Base64 =
+  encode64: (str) -> encode64(unescape(encodeURIComponent(str)))
+  decode64: (str) ->
+    if invalidChar = str.match(INVALID_CHARACTERS)
+      throw new InvalidSequenceError(invalidChar[0])
+
+    decodeURIComponent(escape(decode64(str)))
