@@ -1,3 +1,16 @@
+###
+ * base64.coffee, v1.0
+ * https://github.com/rwz/base64.coffee
+ *
+ * Copyright 2012 Pavel Pravosud
+ * Licensed under the MIT license.
+ * http://opensource.org/licenses/mit-license
+ *
+ * References: http://en.wikipedia.org/wiki/Base64
+ *
+ * Date: Sat Jan 7 17:30:44 ICT 2012
+###
+
 fromCharCode = String.fromCharCode
 CHARACTERS ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
 INVALID_CHARACTERS = /[^a-z\d\+\=\/]/ig
